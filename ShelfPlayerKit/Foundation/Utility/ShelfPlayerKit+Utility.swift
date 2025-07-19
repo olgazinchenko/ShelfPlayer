@@ -50,11 +50,25 @@ public extension ShelfPlayerKit {
         return _clientID!
     }
     
-    static var downloadDirectoryURL: URL {
-        if ShelfPlayerKit.enableCentralized {
-            FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: groupContainer)!.appending(path: "DownloadV2")
+    static let downloadDirectoryURL: URL = {
+        let directory: URL
+        
+        if enableCentralized,
+           let groupURL = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: groupContainer) {
+            directory = groupURL.appending(path: "DownloadV2", directoryHint: .isDirectory)
         } else {
-            URL.userDirectory.appending(path: "ShelfPlayer").appending(path: "DownloadV2")
+            directory = FileManager.default.urls(for: .applicationSupportDirectory,
+                                                 in: .userDomainMask)[0].appending(path: "Downloads",
+                                                                                   directoryHint: .isDirectory)
         }
-    }
+        
+        do {
+            try FileManager.default.createDirectory(at: directory,
+                                                    withIntermediateDirectories: true)
+        } catch {
+            assertionFailure("Couldn’t create download directory: \(error)")
+        }
+        
+        return directory
+    }()
 }

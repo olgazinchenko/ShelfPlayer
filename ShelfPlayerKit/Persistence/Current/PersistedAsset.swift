@@ -54,17 +54,22 @@ extension SchemaV2 {
             }
         }
         var path: URL {
-            var base = ShelfPlayerKit.downloadDirectoryURL
+            var directory = ShelfPlayerKit.downloadDirectoryURL
             
-            base.append(path: itemID.connectionID.replacing("/", with: "_"))
-            base.append(path: itemID.libraryID)
-            base.append(path: itemID.primaryID)
+            directory.append(path: itemID.connectionID.replacing("/", with: "_"),
+                             directoryHint: .isDirectory)
+            directory.append(path: itemID.libraryID, directoryHint: .isDirectory)
+            directory.append(path: itemID.primaryID, directoryHint: .isDirectory)
+
+            do {
+                try FileManager.default.createDirectory(at: directory,
+                                                        withIntermediateDirectories: true,
+                                                        attributes: nil)
+            } catch {
+                assertionFailure("Couldn’t create download subdirectory: \(error)")
+            }
             
-            try! FileManager.default.createDirectory(at: base, withIntermediateDirectories: true)
-            
-            base.append(path: "\(id).\(fileExtension)")
-            
-            return base
+            return directory.appending(path: "\(id).\(fileExtension)", directoryHint: .notDirectory)
         }
         
         enum FileType: Codable {
