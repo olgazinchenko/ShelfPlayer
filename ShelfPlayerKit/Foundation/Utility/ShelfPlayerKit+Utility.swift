@@ -13,6 +13,9 @@ import UIKit
 
 public extension ShelfPlayerKit {
     static let groupContainer = "group.io.rfk.shelfplayer"
+    static let shelfPlayerFolder = "ShelfPlayer"
+    static let downloadFolderV2 = "DownloadV2"
+    static let downloadsFolder = "Downloads"
     
     static nonisolated(unsafe) var enableCentralized = true
     
@@ -51,24 +54,28 @@ public extension ShelfPlayerKit {
     }
     
     static let downloadDirectoryURL: URL = {
-        let directory: URL
+        let baseURL: URL
         
         if enableCentralized,
            let groupURL = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: groupContainer) {
-            directory = groupURL.appending(path: "DownloadV2", directoryHint: .isDirectory)
+            baseURL = groupURL
+                .appending(path: shelfPlayerFolder, directoryHint: .isDirectory)
+                .appending(path: downloadFolderV2, directoryHint: .isDirectory)
         } else {
-            directory = FileManager.default.urls(for: .applicationSupportDirectory,
-                                                 in: .userDomainMask)[0].appending(path: "Downloads",
-                                                                                   directoryHint: .isDirectory)
+            let appSupport = FileManager.default.urls(for: .applicationSupportDirectory,
+                                                 in: .userDomainMask)[0]
+                .appending(path: shelfPlayerFolder, directoryHint: .isDirectory)
+                .appending(path: downloadsFolder, directoryHint: .isDirectory)
+            baseURL = appSupport
         }
         
         do {
-            try FileManager.default.createDirectory(at: directory,
+            try FileManager.default.createDirectory(at: baseURL,
                                                     withIntermediateDirectories: true)
         } catch {
-            assertionFailure("Couldn’t create download directory: \(error)")
+            assertionFailure("⚠️ Couldn’t create download directory: \(error)")
         }
         
-        return directory
+        return baseURL
     }()
 }
